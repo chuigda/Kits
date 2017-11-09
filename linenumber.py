@@ -6,7 +6,11 @@ def solveFile (fileName) :
     codeLines = src.split("\n");
     file.close();
     for i in range (1, len(codeLines)+1) :
-        print("%4d %s"%(i, codeLines[i-1]));
+        if i >= 10000 :
+            print("%s %s", str(i-1000).zfill(4), codeLines[i]);
+        else :
+            print("%s %s"%(str(i).zfill(4), codeLines[i-1]));
 
-userFile = str(raw_input("$ "));
+userFile = str(input("$ "));
 solveFile(userFile);
+
