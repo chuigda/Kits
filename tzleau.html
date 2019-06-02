@@ -1,0 +1,216 @@
+<html>
+  <meta charset="utf-8"/>
+  <head>
+    <script type="text/javascript">
+
+function parseTime(ts) {
+  ts = ts.replace(/-/g,':').replace(' ', ':')
+  let tss = ts.split(':')
+  return new Date(tss[0],(tss[1]-1),tss[2],tss[3],tss[4],tss[5])
+}
+
+function createRecordByString(string) {
+  let commaSepStr = string.split(',')
+  if (commaSepStr[0] == 'time') {
+    return null
+  }
+  let ret = new Object()
+  let time = parseTime(commaSepStr[0])
+  ret.timeByMins = time.getHours() * 60 + time.getMinutes()
+  ret.stationId = commaSepStr[1]
+  if (commaSepStr[2] == "0") {
+    ret.status = "in"
+  }
+  else {
+    ret.status = "out"
+  }
+  return ret
+}
+
+function recordsToSections(records) {
+  var sectionsList = []
+  for (var i = 0; i < 81; i++) {
+    sectionsList.push([])
+  }
+  var recordidx = 0
+  for (var secid = 0; secid < 6 * 24; ++secid) {
+    for (let sections of sectionsList) {
+      sections.push([0, 0])
+    }
+    for (true ; records[recordidx] != undefined
+           && (records[recordidx].timeByMins < secid * 10) 
+           && (recordidx < records.length); ++recordidx) {
+      var sectionsListIdx = parseInt(records[recordidx].stationId)
+      if (records[recordidx].status == "in") {
+        sectionsList[sectionsListIdx][secid][0]++
+      }
+      else {
+        sectionsList[sectionsListIdx][secid][1]++
+      }
+    }
+  }
+  return sectionsList
+}
+
+function maxOfSectionArr(sections) {
+  var ret = 0
+  for (let [xin, xout] of sections) {
+    if (xin > ret) {
+      ret = xin
+    }
+    if (xout > ret) {
+      ret = xout
+    }
+  }
+  return ret
+}
+
+function maxOfSectionIns(sections) {
+  var ret = 0
+  for (let [xin, _] of sections) {
+    if (xin > ret) {
+      ret = xin
+    }
+  }
+  return ret
+}
+
+function maxOfSectionOuts(sections) {
+  var ret = 0
+  for (let [_, xout] of sections) {
+    if (xout > ret) {
+      ret = xout
+    }
+  }
+  return ret
+}
+
+function paintSections(canvas, sections) {
+  let yMax = Math.ceil(maxOfSectionArr(sections) * 1.11)
+  let cw = canvas.width
+  let ch = canvas.height
+  let cmid = ch / 2
+
+  let dw = cw / (sections.length + 10)
+  let dh = cmid / yMax
+
+  let context = canvas.getContext('2d')
+  context.fillStyle = "#FFFFFF"
+  context.fillRect(0, 0, cw, ch)
+
+  context.fillStyle = "#000000"
+  context.fillRect(dw * 5, ch - 10, dw * 144, 1)
+  for (var i = 0; i <= sections.length / 6; i++) {
+    context.fillStyle = "#AAAAAA"
+    context.fillRect(dw * (i * 6 + 5), 13, 1, ch - 26)
+    context.fillStyle = "#000000"
+    context.fillRect(dw * (i * 6 + 5), ch - 13, 1, 3)
+    context.fillText(i.toString(), dw * (i * 6 + 5), 13)
+  }
+
+  context.fillStyle = "#7F7F7F"
+  let inMax = maxOfSectionIns(sections)
+  context.fillRect(dw * 5, cmid - inMax * dh, dw * 144, 1)
+  let outMax = maxOfSectionOuts(sections)
+  context.fillRect(dw * 5, cmid + outMax * dh, dw * 144, 1)
+
+  context.fillStyle = "#000000"
+  context.fillText("outMax=" + inMax.toString(), dw * 5, cmid - inMax * dh)
+  context.fillText("inMax=" + outMax.toString(), dw * 5, cmid + outMax * dh)
+
+  context.moveTo((i + 4) * dw, cmid)
+  context.beginPath()
+  context.strokeStyle = "#FF7700"
+  for (var i = 0; i < sections.length; i++) {
+    let [xin, _] = sections[i]
+    context.lineTo((i + 5) * dw, cmid - xin * dh)
+  }
+  context.stroke()
+
+  context.moveTo((i + 4) * dw, cmid)
+  context.beginPath()
+  context.strokeStyle = "#0077FF"
+  for (var i = 0; i < sections.length; i++) {
+    let [_, xout] = sections[i]
+    context.lineTo((i + 5) * dw, cmid + xout * dh)
+  }
+  context.stroke()
+}
+
+function main() {
+  document.getElementById('fileinput').addEventListener('change', onfilechange)
+}
+
+function onfilechange(event) {
+  let fileSelected = document.getElementById('fileinput').files[0]
+  var fr = new FileReader()
+  fr.onload = function() {
+    let values = this.result.split('\n')
+    solveData(values)
+  }
+  fr.readAsText(fileSelected)
+  updateStatBar("reading data")
+}
+
+function solveData(values) {
+  updateStatBar("cleaning")
+  canvasContainer = document.getElementById("tzleau")
+  canvasContainer.innerHTML = ""
+  linkContainer = document.getElementById("downloader")
+  linkContainer.innerHTML = ""
+
+  updateStatBar("parsing records")
+  var records = []
+  for (let valueLine of values) {
+    record = createRecordByString(valueLine)
+    if (record == null) {
+      continue
+    }
+    records.push(record)
+  }
+  
+  updateStatBar("combining records")
+  sectionsList = recordsToSections(records)
+
+  updateStatBar("painting")
+  for (var i = 0; i < sectionsList.length; i++) {
+    var canvas = document.createElement("canvas")
+    canvas.id = "tzleaucanvas" + i.toString()
+    canvas.width = 500
+    canvas.height = 500
+    canvas.style = "border: 1px solid black"
+    canvasContainer.appendChild(canvas)
+
+    paintSections(canvas, sectionsList[i])
+
+    var imageLink = canvas.toDataURL("image/png")
+    var dldlink = document.createElement("a")
+    dldlink.id = "tzleauimg" + i.toString()
+    dldlink.href = imageLink
+    dldlink.alt = "tzleauimg" + i.toString() + " image"
+    dldlink.download = "tzleauimg" + i.toString() + ".png"
+    dldlink.innerHTML = "image" + i.toString() + "<br/>"
+    linkContainer.appendChild(dldlink)
+  }
+  updateStatBar("ready")
+}
+
+function updateStatBar(newText) {
+  document.getElementById("statbar").innerText = newText
+}
+
+    </script>
+  </head>
+  <body onload="main()">
+    <input type="file" id="fileinput"/>
+    <div id="tzleau">
+      所有图像会显示在这里
+    </div>
+    <hr/>
+    <div id="downloader">
+      下载链接会显示在这里
+    </div>
+    <hr/>
+    <div id="statbar">ready</div>
+  </body>
+<ml>
