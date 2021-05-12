@@ -9,3 +9,9 @@ I invented this tool when I was reading boost::circular_buffer. Exactly, there a
 
 ## linenumber
 Add linenumber for codes before I print them.
+
+## zalt
+A very weird Lisp-like language. You must `$` everything you'd like to evaluate explicitly.
+
+## typeAssert
+A small library for type assertions in JavaScript
