@@ -14,4 +14,4 @@ Add linenumber for codes before I print them.
 A very weird Lisp-like language. You must `$` everything you'd like to evaluate explicitly.
 
 ## typeAssert
-A small library for type assertions in JavaScript
+A small library for type assertions in JavaScript. The story continues in [this repo](https://github.com/ICEYSELF/TypeAssert), and the UMD file here is a legacy option.
