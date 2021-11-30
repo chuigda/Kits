@@ -15,3 +15,6 @@ A very weird Lisp-like language. You must `$` everything you'd like to evaluate 
 
 ## typeAssert
 A small library for type assertions in JavaScript. The story continues in [this repo](https://github.com/ICEYSELF/TypeAssert), and the UMD file here is a legacy option.
+
+## tyconv
+Converts between YAML and TOML, with certain restrictions.
