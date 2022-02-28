@@ -1,6 +1,9 @@
 # Kits
 Personal tools. start and thank author if you find these tools useful.
 
+## httpd
+A minimal http server written in Rust, suitable if you want to serve something while not bundling too many stuff.
+
 ## idcount
 "idcount" is a tool for counting the identifier used in a project. Initially I invented this tool in order to check spelling and specifications.
 
