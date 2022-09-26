@@ -21,3 +21,6 @@ A small library for type assertions in JavaScript. The story continues in [this 
 
 ## tyconv
 Converts between YAML and TOML, with certain restrictions.
+
+## dont-werror.py
+Some big companies are too confident to their code quality and they enable `-Werror` in even "production" code, crashing downstream builds from time to time. Use this script to "hook" or "hijack" your C compiler, and make both you and your compiler happier.
